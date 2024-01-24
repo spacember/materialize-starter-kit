@@ -28,9 +28,9 @@ const Home = () => {
     fileInput.click();
   }
 
+  // Handle file upload logic here
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
-    // Handle file upload logic here
     console.log('Uploaded file:', file);
   }
 

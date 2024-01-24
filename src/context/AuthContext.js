@@ -4,6 +4,10 @@ import { createContext, useEffect, useState } from 'react'
 // ** Next Import
 import { useRouter } from 'next/router'
 
+// ** Firebase Import
+import { auth } from 'src/firebase'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+
 // ** Axios
 import axios from 'axios'
 
@@ -61,7 +65,7 @@ const AuthProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleLogin = (params, errorCallback) => {
+  const handleLogin1 = (params, errorCallback) => {
     axios
       .post(authConfig.loginEndpoint, params)
       .then(async response => {
@@ -79,11 +83,54 @@ const AuthProvider = ({ children }) => {
       })
   }
 
+  // const handleLogout = () => {
+  //   setUser(null)
+  //   window.localStorage.removeItem('userData')
+  //   window.localStorage.removeItem(authConfig.storageTokenKeyName)
+  //   router.push('/login')
+  // }
+
+  useEffect(() => {
+    return auth.onAuthStateChanged(user => {
+      setUser(user)
+      setLoading(false)
+    })
+  }, [])
+
+  const handleLogin = async (params, errorCallback) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, params.email, params.password)
+      const user = userCredential.user
+
+      // Store the user data in local storage if rememberMe is true
+      if (params.rememberMe) {
+        window.localStorage.setItem('userData', JSON.stringify(user))
+        window.localStorage.setItem(authConfig.storageTokenKeyName, user.accessToken)
+      }
+
+      // Set the user data in the context state
+      setUser(user)
+
+      // Redirect the user to a return URL or the root URL
+      const returnUrl = router.query.returnUrl
+      const redirectURL = returnUrl && returnUrl !== '/' ? returnUrl : '/'
+      router.replace(redirectURL)
+    } catch (error) {
+      console.error('Error signing in with password and email', error)
+
+      // Call the errorCallback function if one is provided
+      if (errorCallback) errorCallback(error)
+
+      throw error
+    }
+  }
+
+  useEffect(() => {
+    console.log('user', user)
+  }, [user])
+
   const handleLogout = () => {
-    setUser(null)
-    window.localStorage.removeItem('userData')
-    window.localStorage.removeItem(authConfig.storageTokenKeyName)
-    router.push('/login')
+    return auth.signOut()
   }
 
   const values = {
