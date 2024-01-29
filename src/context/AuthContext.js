@@ -65,38 +65,6 @@ const AuthProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleLogin1 = (params, errorCallback) => {
-    axios
-      .post(authConfig.loginEndpoint, params)
-      .then(async response => {
-        params.rememberMe
-          ? window.localStorage.setItem(authConfig.storageTokenKeyName, response.data.accessToken)
-          : null
-        const returnUrl = router.query.returnUrl
-        setUser({ ...response.data.userData })
-        params.rememberMe ? window.localStorage.setItem('userData', JSON.stringify(response.data.userData)) : null
-        const redirectURL = returnUrl && returnUrl !== '/' ? returnUrl : '/'
-        router.replace(redirectURL)
-      })
-      .catch(err => {
-        if (errorCallback) errorCallback(err)
-      })
-  }
-
-  // const handleLogout = () => {
-  //   setUser(null)
-  //   window.localStorage.removeItem('userData')
-  //   window.localStorage.removeItem(authConfig.storageTokenKeyName)
-  //   router.push('/login')
-  // }
-
-  useEffect(() => {
-    return auth.onAuthStateChanged(user => {
-      setUser(user)
-      setLoading(false)
-    })
-  }, [])
-
   const handleLogin = async (params, errorCallback) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, params.email, params.password)
@@ -109,27 +77,24 @@ const AuthProvider = ({ children }) => {
       }
 
       // Set the user data in the context state
-      setUser(user)
+      setUser({ ...user, role: 'admin' })
 
       // Redirect the user to a return URL or the root URL
       const returnUrl = router.query.returnUrl
       const redirectURL = returnUrl && returnUrl !== '/' ? returnUrl : '/'
-      router.replace(redirectURL)
+      const isReplaced = await router.replace(redirectURL)
     } catch (error) {
-      console.error('Error signing in with password and email', error)
-
       // Call the errorCallback function if one is provided
       if (errorCallback) errorCallback(error)
-
-      throw error
     }
   }
 
-  useEffect(() => {
-    console.log('user', user)
-  }, [user])
-
   const handleLogout = () => {
+    setUser(null)
+    window.localStorage.removeItem('userData')
+    window.localStorage.removeItem(authConfig.storageTokenKeyName)
+    router.push('/login')
+
     return auth.signOut()
   }
 

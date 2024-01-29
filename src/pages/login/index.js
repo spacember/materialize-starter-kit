@@ -3,7 +3,6 @@ import { useState } from 'react'
 
 // ** Next Imports
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 
 // ** MUI Components
 import Alert from '@mui/material/Alert'
@@ -30,9 +29,6 @@ import Icon from 'src/@core/components/icon'
 import * as yup from 'yup'
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-
-// Firebase import
-import firebase from 'firebase/app'
 
 // ** Hooks
 import { useAuth } from 'src/hooks/useAuth'
@@ -134,10 +130,9 @@ const LoginPage = () => {
   })
 
   const onSubmit = data => {
-    const { email, password } = data
+    const { email, password, rememberMe } = data
 
     // ** Handle form submission
-    // remember me is not implemented yet
     auth.login({ email, password, rememberMe }, () => {
       setError('email', {
         type: 'manual',
