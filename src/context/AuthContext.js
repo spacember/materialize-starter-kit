@@ -82,7 +82,7 @@ const AuthProvider = ({ children }) => {
       // Redirect the user to a return URL or the root URL
       const returnUrl = router.query.returnUrl
       const redirectURL = returnUrl && returnUrl !== '/' ? returnUrl : '/'
-      const isReplaced = await router.replace(redirectURL)
+      await router.replace(redirectURL)
     } catch (error) {
       // Call the errorCallback function if one is provided
       if (errorCallback) errorCallback(error)
