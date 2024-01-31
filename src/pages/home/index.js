@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 // ** CustomMUI imports
 import Grid from '@mui/material/Grid'
-import DocumentCard from './DocumentCard'
+import Invoices from './Invoices'
 import StatisticsCard from './StatisticsCard'
 
 // ** Firebase imports
@@ -34,7 +34,7 @@ const Home = () => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-        <DocumentCard data={data} handlePageChange={handlePageChange} />
+        <Invoices data={data} handlePageChange={handlePageChange} />
       </Grid>
       <Grid item xs={6}>
         <StatisticsCard />
