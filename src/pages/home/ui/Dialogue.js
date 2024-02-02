@@ -25,7 +25,7 @@ const Dialogue = () => {
       <Button variant={'contained'} onClick={handleClickOpen}>
         Ajouter des Documents
       </Button>
-      <Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+      <Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title' fullWidth={true} maxWidth={'md'} scroll='body'>
         <DialogTitle id='form-dialog-title'>Ajouter des Documents</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 3 }}>Veuillez saisir les détails et télécharger les fichiers</DialogContentText>
