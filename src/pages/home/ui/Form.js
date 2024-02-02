@@ -2,6 +2,7 @@
 import { useContext, useState } from 'react'
 
 // ** MUI Imports
+import { Box } from '@mui/material'
 import TextField from '@mui/material/TextField'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
@@ -9,12 +10,13 @@ import MenuItem from '@mui/material/MenuItem'
 import Button from '@mui/material/Button'
 import FormGroup from '@mui/material/FormGroup'
 import InputLabel from '@mui/material/InputLabel'
-import { Box } from '@mui/material'
+import Divider from '@mui/material/Divider'
 
 // ** Custom Components
 import FileUploaderMultiple from './FileUploaderMultiple'
 
-// ** Contexts
+// ** Contexts imports
+import { AuthContext } from 'src/context/AuthContext'
 import { InvoicesContext } from 'src/context/InvoicesContext'
 
 // ** Firebase imports
@@ -22,20 +24,19 @@ import { storage } from 'src/firebase'
 import { ref, set, uploadBytes } from 'firebase/storage'
 
 const Form = () => {
-  // States
+  // States, not impl as it is structured data
   const [name, setName] = useState('')
   const [grossiste, setGrossiste] = useState('')
 
   // Contexts
   const { files } = useContext(InvoicesContext)
+  const { user } = useContext(AuthContext)
 
-  const handleFileUpload = async event => {
-    console.log('handleFileUpload')
+  const handleMultipleFileUpload = async event => {
     event.preventDefault()
 
-    // Handle the file upload
     const uploadPromises = files.map(file => {
-      const storageRef = ref(storage, `files/${file.name}`)
+      const storageRef = ref(storage, `${user.email}/${file.name}`)
 
       return uploadBytes(storageRef, file)
     })
@@ -44,19 +45,15 @@ const Form = () => {
       // Wait for all files to be uploaded
       await Promise.all(uploadPromises)
 
-      // After file uploads, save the form data to Firebase
-      // Replace 'yourDatabaseRef' with your actual database reference
-      const formDataRef = ref(storage, 'formData/')
-      await set(formDataRef, { name, grossiste })
-
-      console.log('Files and form data uploaded successfully')
+      // for storing form data (which is structured data), you should use Cloud Firestore
+      console.log('Files uploaded successfully')
     } catch (error) {
-      console.error('Error uploading files and form data:', error)
+      console.error('Error uploading files:', error)
     }
   }
 
   return (
-    <form onSubmit={handleFileUpload}>
+    <form onSubmit={handleMultipleFileUpload}>
       <FormGroup>
         <Box mb={6}>
           <FormControl>
@@ -82,12 +79,11 @@ const Form = () => {
             <FileUploaderMultiple />
           </FormControl>
         </Box>
-        <Box mb={6}>
-          <FormControl>
-            <Button variant='contained' type='submit'>
-              Soumettre
-            </Button>
-          </FormControl>
+        <Divider sx={{ my: '0 !important' }} />
+        <Box mt={6}>
+          <Button variant='contained' type='submit'>
+            Soumettre
+          </Button>
         </Box>
       </FormGroup>
     </form>
