@@ -13,7 +13,7 @@ import { styled } from '@mui/material/styles'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 
-// ** Contexts
+// ** Context Imports
 import { InvoicesContext } from 'src/context/InvoicesContext'
 
 // ** Icon Imports
@@ -97,13 +97,13 @@ const FileUploaderMultiple = () => {
         <Box sx={{ display: 'flex', flexDirection: ['column', 'column', 'row'], alignItems: 'center' }}>
           <Img width={300} alt='Uploaad' src='/images/misc/upload.png' />
           <Box sx={{ display: 'flex', flexDirection: 'column', textAlign: ['center', 'center', 'inherit'] }}>
-            <HeadingTypography variant='h5'>Drop files here or click to upload.</HeadingTypography>
+            <HeadingTypography variant='h5'>Déposez les fichiers ici ou cliquez pour télécharger.</HeadingTypography>
             <Typography color='textSecondary' sx={{ '& a': { color: 'primary.main', textDecoration: 'none' } }}>
-              Drop files here or click{' '}
+              Déposez des fichiers ici ou cliquez sur{' '}
               <Link href='/' onClick={e => e.preventDefault()}>
-                browse
+                parcourir
               </Link>{' '}
-              thorough your machine
+              votre machine
             </Typography>
           </Box>
         </Box>
@@ -113,7 +113,7 @@ const FileUploaderMultiple = () => {
           <List>{fileList}</List>
           <div className='buttons'>
             <Button color='error' variant='outlined' onClick={handleRemoveAllFiles}>
-              Remove All
+              Enlever tout
             </Button>
           </div>
         </Fragment>
