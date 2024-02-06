@@ -1,5 +1,14 @@
 // ** React imports
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
+
+// ** Contexts imports
+import { AuthContext } from 'src/context/AuthContext'
+import { InvoicesContext } from 'src/context/InvoicesContext'
+
+// ** Firebase imports
+import { storage, app } from 'src/firebase'
+import { ref, getDownloadURL, uploadBytes } from 'firebase/storage'
+import { collection, addDoc, getFirestore } from 'firebase/firestore'
 
 // ** MUI Imports
 import { Box } from '@mui/material'
@@ -15,16 +24,11 @@ import Divider from '@mui/material/Divider'
 // ** Custom Components
 import FileUploaderMultiple from './FileUploaderMultiple'
 
-// ** Contexts imports
-import { AuthContext } from 'src/context/AuthContext'
-import { InvoicesContext } from 'src/context/InvoicesContext'
-
-// ** Firebase imports
-import { storage } from 'src/firebase'
-import { ref, set, uploadBytes } from 'firebase/storage'
+const db = getFirestore(app)
+const userRef = collection(db, 'users')
 
 const Form = () => {
-  // States, not impl as it is structured data
+  // States
   const [name, setName] = useState('')
   const [grossiste, setGrossiste] = useState('')
 
@@ -32,21 +36,33 @@ const Form = () => {
   const { files } = useContext(InvoicesContext)
   const { user } = useContext(AuthContext)
 
+  const handleNameChange = event => {
+    setName(event.target.value)
+  }
+
+  const handleGrossisteChange = event => {
+    setGrossiste(event.target.value)
+  }
+
   const handleMultipleFileUpload = async event => {
     event.preventDefault()
 
-    const uploadPromises = files.map(file => {
+    const uploadPromises = files.map(async file => {
       const storageRef = ref(storage, `${user.email}/${file.name}`)
+      await uploadBytes(storageRef, file)
 
-      return uploadBytes(storageRef, file)
+      return getDownloadURL(storageRef)
     })
 
     try {
-      // Wait for all files to be uploaded
-      await Promise.all(uploadPromises)
+      const downloadURLs = await Promise.all(uploadPromises)
 
-      // for storing form data (which is structured data), you should use Cloud Firestore
-      console.log('Files uploaded successfully')
+      await addDoc(userRef, {
+        email: user.email,
+        nom: name,
+        grossiste: grossiste,
+        documents: downloadURLs
+      })
     } catch (error) {
       console.error('Error uploading files:', error)
     }
@@ -57,13 +73,13 @@ const Form = () => {
       <FormGroup>
         <Box mb={6}>
           <FormControl>
-            <TextField label='Nom' />
+            <TextField label='Nom' value={name} onChange={handleNameChange} />
           </FormControl>
         </Box>
         <Box mb={6}>
           <FormControl>
             <InputLabel id='grossiste-label'>Grossiste</InputLabel>
-            <Select labelId='grossiste-label' defaultValue=''>
+            <Select labelId='grossiste-label' defaultValue='' value={grossiste} onChange={handleGrossisteChange}>
               <MenuItem value=''>
                 <em>None</em>
               </MenuItem>
