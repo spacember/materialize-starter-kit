@@ -7,20 +7,31 @@ import { useRouter } from 'next/router'
 // ** Hooks Import
 import { useAuth } from 'src/hooks/useAuth'
 
+// // ** Firebase Import
+import { auth } from 'src/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+
 const GuestGuard = props => {
   const { children, fallback } = props
-  const auth = useAuth()
+  const userAuth = useAuth()
   const router = useRouter()
+
   useEffect(() => {
     if (!router.isReady) {
       return
     }
-    if (window.localStorage.getItem('userData')) {
-      router.replace('/')
-    }
+
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (user) {
+        router.replace('/')
+      }
+    })
+
+    return unsubscribe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.route])
-  if (auth.loading || (!auth.loading && auth.user !== null)) {
+
+  if (userAuth.loading || (!userAuth.loading && auth.currentUser !== null)) {
     return fallback
   }
 
