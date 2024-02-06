@@ -6,13 +6,9 @@ import { useRouter } from 'next/router'
 
 // ** Firebase Import
 import { auth } from 'src/firebase'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-
-// ** Axios
-import axios from 'axios'
-
-// ** Config
-import authConfig from 'src/configs/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
+import { doc, setDoc, getFirestore } from 'firebase/firestore'
+import { app } from 'src/firebase'
 
 // ** Defaults
 const defaultProvider = {
@@ -21,9 +17,12 @@ const defaultProvider = {
   setUser: () => null,
   setLoading: () => Boolean,
   login: () => Promise.resolve(),
-  logout: () => Promise.resolve()
+  logout: () => Promise.resolve(),
+  register: () => Promise.resolve()
 }
+
 const AuthContext = createContext(defaultProvider)
+const db = getFirestore(app)
 
 const AuthProvider = ({ children }) => {
   // ** States
@@ -32,37 +31,22 @@ const AuthProvider = ({ children }) => {
 
   // ** Hooks
   const router = useRouter()
+
   useEffect(() => {
-    const initAuth = async () => {
-      const storedToken = window.localStorage.getItem(authConfig.storageTokenKeyName)
-      if (storedToken) {
-        setLoading(true)
-        await axios
-          .get(authConfig.meEndpoint, {
-            headers: {
-              Authorization: storedToken
-            }
-          })
-          .then(async response => {
-            setLoading(false)
-            setUser({ ...response.data.userData })
-          })
-          .catch(() => {
-            localStorage.removeItem('userData')
-            localStorage.removeItem('refreshToken')
-            localStorage.removeItem('accessToken')
-            setUser(null)
-            setLoading(false)
-            if (authConfig.onTokenExpiration === 'logout' && !router.pathname.includes('login')) {
-              router.replace('/login')
-            }
-          })
-      } else {
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (user) {
         setLoading(false)
+        setUser({ ...user, role: 'admin' })
+      } else {
+        setUser(null)
+        setLoading(false)
+
+        // If no user is logged in, stay on the login page
+        router.replace('/login')
       }
-    }
-    initAuth()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    })
+
+    return unsubscribe
   }, [])
 
   const handleLogin = async (params, errorCallback) => {
@@ -70,32 +54,52 @@ const AuthProvider = ({ children }) => {
       const userCredential = await signInWithEmailAndPassword(auth, params.email, params.password)
       const user = userCredential.user
 
-      // Store the user data in local storage if rememberMe is true
-      if (params.rememberMe) {
-        window.localStorage.setItem('userData', JSON.stringify(user))
-        window.localStorage.setItem(authConfig.storageTokenKeyName, user.accessToken)
-      }
-
       // Set the user data in the context state
-      setUser({ ...user, role: 'admin' })
+      setUser({ ...user, role: params.role || 'admin' })
 
       // Redirect the user to a return URL or the root URL
       const returnUrl = router.query.returnUrl
       const redirectURL = returnUrl && returnUrl !== '/' ? returnUrl : '/'
-      await router.replace(redirectURL)
+      router.replace(redirectURL)
     } catch (error) {
       // Call the errorCallback function if one is provided
       if (errorCallback) errorCallback(error)
     }
   }
 
-  const handleLogout = () => {
-    setUser(null)
-    window.localStorage.removeItem('userData')
-    window.localStorage.removeItem(authConfig.storageTokenKeyName)
-    router.push('/login')
+  const handleLogout = async () => {
+    try {
+      setUser(null)
+      await auth.signOut()
+      router.replace('/login')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
-    return auth.signOut()
+  // Should handle user role in register form
+  const handleRegister = async (params, errorCallback) => {
+    try {
+      // Create a new user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, params.email, params.password)
+      const user = userCredential.user
+
+      // Create a new document in Firestore with the user's ID as the document ID
+      await setDoc(doc(db, 'users', user.uid), {
+        role: params.role || 'admin'
+      })
+
+      // Set the user data in the context state
+      setUser({ ...user, role: params.role || 'admin' })
+
+      // Redirect the user to a return URL or the root URL
+      const returnUrl = router.query.returnUrl
+      const redirectURL = returnUrl && returnUrl !== '/' ? returnUrl : '/'
+      router.replace(redirectURL)
+    } catch (error) {
+      // Call the errorCallback function if one is provided
+      if (errorCallback) errorCallback(error)
+    }
   }
 
   const values = {
@@ -104,7 +108,8 @@ const AuthProvider = ({ children }) => {
     setUser,
     setLoading,
     login: handleLogin,
-    logout: handleLogout
+    logout: handleLogout,
+    register: handleRegister
   }
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>
