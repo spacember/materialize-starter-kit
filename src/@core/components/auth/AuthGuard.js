@@ -7,30 +7,36 @@ import { useRouter } from 'next/router'
 // ** Hooks Import
 import { useAuth } from 'src/hooks/useAuth'
 
+// ** Firebase Import
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from 'src/firebase'
+
 const AuthGuard = props => {
   const { children, fallback } = props
-  const auth = useAuth()
+  const userAuth = useAuth()
   const router = useRouter()
+
   useEffect(
     () => {
       if (!router.isReady) {
         return
       }
-      if (auth.user === null && !window.localStorage.getItem('userData')) {
-        if (router.asPath !== '/') {
+
+      const unsubscribe = onAuthStateChanged(auth, user => {
+        if (!user) {
           router.replace({
             pathname: '/login',
             query: { returnUrl: router.asPath }
           })
-        } else {
-          router.replace('/login')
         }
-      }
+      })
+
+      return unsubscribe
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [router.route]
   )
-  if (auth.loading || auth.user === null) {
+  if (userAuth.loading || auth.currentUser === null) {
     return fallback
   }
 
