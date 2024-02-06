@@ -30,6 +30,7 @@ import themeConfig from 'src/configs/themeConfig'
 import BlankLayout from 'src/@core/layouts/BlankLayout'
 
 // ** Hooks
+import { useAuth } from 'src/hooks/useAuth'
 import { useSettings } from 'src/@core/hooks/useSettings'
 
 // ** Demo Imports
@@ -93,9 +94,12 @@ const LinkStyled = styled(Link)(({ theme }) => ({
 
 const Register = () => {
   // ** States
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   // ** Hooks
+  const auth = useAuth()
   const theme = useTheme()
   const { settings } = useSettings()
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
@@ -103,6 +107,21 @@ const Register = () => {
   // ** Vars
   const { skin } = settings
   const imageSource = skin === 'bordered' ? 'auth-v2-register-illustration-bordered' : 'auth-v2-register-illustration'
+
+  // ** Event Handlers
+  const handleEmailChange = event => {
+    setEmail(event.target.value)
+  }
+
+  const handlePasswordChange = event => {
+    setPassword(event.target.value)
+  }
+
+  const register = async event => {
+    event.preventDefault()
+
+    await auth.register({ email, password })
+  }
 
   return (
     <Box className='content-right'>
@@ -217,15 +236,24 @@ const Register = () => {
               <TypographyStyled variant='h5'>Adventure starts here 🚀</TypographyStyled>
               <Typography variant='body2'>Make your app management easy and fun!</Typography>
             </Box>
-            <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()}>
-              <TextField autoFocus fullWidth sx={{ mb: 4 }} label='Username' placeholder='johndoe' />
-              <TextField fullWidth label='Email' sx={{ mb: 4 }} placeholder='user@email.com' />
+            <form noValidate autoComplete='off' onSubmit={register}>
+              <TextField autoFocus fullWidth sx={{ mb: 4 }} label='Username' placeholder='Not impl' />
+              <TextField
+                fullWidth
+                label='Email'
+                sx={{ mb: 4 }}
+                placeholder='test@gmail.com'
+                value={email}
+                onChange={handleEmailChange}
+              />
               <FormControl fullWidth>
                 <InputLabel htmlFor='auth-login-v2-password'>Password</InputLabel>
                 <OutlinedInput
                   label='Password'
                   id='auth-login-v2-password'
                   type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={handlePasswordChange}
                   endAdornment={
                     <InputAdornment position='end'>
                       <IconButton
