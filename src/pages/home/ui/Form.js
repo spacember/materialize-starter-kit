@@ -26,6 +26,7 @@ import FileUploaderMultiple from './FileUploaderMultiple'
 
 const db = getFirestore(app)
 const userRef = collection(db, 'users')
+const submissionsRef = collection(db, 'submissions')
 
 const Form = () => {
   // States
@@ -57,7 +58,7 @@ const Form = () => {
     try {
       const downloadURLs = await Promise.all(uploadPromises)
 
-      await addDoc(userRef, {
+      await addDoc(submissionsRef, {
         email: user.email,
         nom: name,
         grossiste: grossiste,
